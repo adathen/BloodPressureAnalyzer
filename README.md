@@ -17,7 +17,7 @@ categorizing the levels, and visualizing trends with respect to medication timin
 from bp_analyzer import BloodPressureAnalyzer
 import pandas as pd
 
-df = pd.read_excel("data.xlsx")
+df = pd.read_excel("血壓.xlsx")
 analyzer = BloodPressureAnalyzer(df)
 
 analyzer.plot_trends()
