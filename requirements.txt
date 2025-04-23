@@ -2,3 +2,4 @@ pandas>=1.1.0
 plotly>=5.0.0
 matplotlib>=3.3.0
 fpdf>=1.7.2
+reportlab>=3.6.0
