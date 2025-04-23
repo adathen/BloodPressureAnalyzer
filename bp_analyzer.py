@@ -1,6 +1,9 @@
 import pandas as pd
-import plotly.graph_objs as go
-from plotly.subplots import make_subplots
+import plotly.graph_objects as go
+from plotly.io import write_image
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from datetime import datetime
 
 class BloodPressureAnalyzer:
     def __init__(self, df):
@@ -36,18 +39,7 @@ class BloodPressureAnalyzer:
         self.df["時段"] = self.df["小時"].apply(period_class)
         self.df["每日首次"] = self.df.groupby("日期")["時間"].transform("min") == self.df["時間"]
 
-    def get_daily_distribution(self):
-        daily = self.df.groupby(["日期", "血壓等級"]).size().unstack(fill_value=0)
-        return daily.div(daily.sum(axis=1), axis=0) * 100
-
-    def get_period_distribution(self):
-        period = self.df.groupby(["時段", "血壓等級"]).size().unstack(fill_value=0)
-        return period.div(period.sum(axis=1), axis=0) * 100
-
-    def get_first_bp_distribution(self):
-        return self.df[self.df["每日首次"]].groupby("血壓等級").size()
-
-    def plot_trends_plotly(self):
+    def plot_trends_plotly(self, save_path="bp_trend.png"):
         fig = go.Figure()
 
         fig.add_trace(go.Scatter(
@@ -77,8 +69,40 @@ class BloodPressureAnalyzer:
             xaxis_title="時間",
             yaxis_title="血壓 (mmHg)",
             font=dict(family="Microsoft JhengHei", size=14),
-            legend=dict(x=1, y=1),
             height=600
         )
 
-        fig.show()
+        # 儲存為圖片
+        write_image(fig, save_path)
+        return save_path
+
+    def generate_pdf_report(self, pdf_path="血壓分析報表.pdf"):
+        chart_path = self.plot_trends_plotly()
+
+        c = canvas.Canvas(pdf_path, pagesize=A4)
+        width, height = A4
+
+        # 標題
+        c.setFont("Helvetica-Bold", 18)
+        c.drawString(72, height - 72, "血壓分析報表")
+
+        # 畫圖
+        c.drawImage(chart_path, 72, height - 500, width=450, preserveAspectRatio=True)
+
+        # 基本統計
+        self.df["血壓等級"] = self.df.apply(lambda row: "正常" if row["收縮壓"] < 120 and row["舒張壓"] < 80 else
+                                             "偏高" if (120 <= row["收縮壓"] <= 140 or 80 <= row["舒張壓"] <= 90) else
+                                             "高血壓", axis=1)
+        stats = self.df["血壓等級"].value_counts(normalize=True) * 100
+        y = height - 540
+        c.setFont("Helvetica", 12)
+        for level in ["正常", "偏高", "高血壓"]:
+            percent = stats.get(level, 0)
+            c.drawString(72, y, f"{level}：{percent:.2f}%")
+            y -= 20
+
+        c.setFont("Helvetica", 10)
+        c.drawString(72, 40, f"產生時間：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
+        c.save()
+        print(f"✅ PDF 報表已儲存至：{pdf_path}")
