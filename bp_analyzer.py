@@ -1,5 +1,6 @@
 import pandas as pd
-import matplotlib.pyplot as plt
+import plotly.graph_objs as go
+from plotly.subplots import make_subplots
 
 class BloodPressureAnalyzer:
     def __init__(self, df):
@@ -46,20 +47,38 @@ class BloodPressureAnalyzer:
     def get_first_bp_distribution(self):
         return self.df[self.df["每日首次"]].groupby("血壓等級").size()
 
-    def plot_trends(self):
-        plt.figure(figsize=(14, 6))
-        plt.plot(self.df["時間"], self.df["收縮壓"], label="收縮壓", marker='o')
-        plt.plot(self.df["時間"], self.df["舒張壓"], label="舒張壓", marker='s')
+    def plot_trends_plotly(self):
+        fig = go.Figure()
 
+        fig.add_trace(go.Scatter(
+            x=self.df["時間"], y=self.df["收縮壓"],
+            mode='lines+markers', name='收縮壓',
+            line=dict(color='red')
+        ))
+
+        fig.add_trace(go.Scatter(
+            x=self.df["時間"], y=self.df["舒張壓"],
+            mode='lines+markers', name='舒張壓',
+            line=dict(color='blue')
+        ))
+
+        # 收縮壓水平線
         for y in [120, 130, 140]:
-            plt.axhline(y=y, color="red", linestyle="--", label=f"收縮壓 {y}")
-        for y in [80, 85, 90]:
-            plt.axhline(y=y, color="blue", linestyle="--", label=f"舒張壓 {y}")
+            fig.add_hline(y=y, line=dict(color='red', dash='dash'),
+                          annotation_text=f"收縮壓 {y}", annotation_position="top left")
 
-        plt.xlabel("時間", fontsize=14)
-        plt.ylabel("血壓 (mmHg)", fontsize=14)
-        plt.title("血壓趨勢圖", fontsize=16)
-        plt.legend(loc="upper right")
-        plt.grid(True)
-        plt.tight_layout()
-        plt.show()
+        # 舒張壓水平線
+        for y in [80, 85, 90]:
+            fig.add_hline(y=y, line=dict(color='blue', dash='dash'),
+                          annotation_text=f"舒張壓 {y}", annotation_position="top left")
+
+        fig.update_layout(
+            title="血壓趨勢圖",
+            xaxis_title="時間",
+            yaxis_title="血壓 (mmHg)",
+            font=dict(family="Microsoft JhengHei", size=14),
+            legend=dict(x=1, y=1),
+            height=600
+        )
+
+        fig.show()
