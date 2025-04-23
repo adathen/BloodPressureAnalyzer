@@ -1,26 +1,16 @@
+from blood_pressure_analyzer import BloodPressureAnalyzer
 import pandas as pd
-from bp_analyzer import BloodPressureAnalyzer
 
-# 匯入血壓數據 Excel
-df = pd.read_excel("血壓.xlsx")
-
-# 初始化分析模組
+df = pd.read_excel("your_blood_pressure_data.xlsx")
 analyzer = BloodPressureAnalyzer(df)
 
-# 顯示每日血壓分類百分比
-print("📊 每日血壓分類百分比：")
-print(analyzer.get_daily_distribution().round(2))
-print()
-
-# 顯示各時段血壓分類百分比
-print("🕑 各時段血壓分類百分比：")
-print(analyzer.get_period_distribution().round(2))
-print()
-
-# 顯示每日首次血壓分類統計
-print("📌 每日首次血壓分類統計：")
+# 查看各類分析結果
+print(analyzer.get_daily_distribution())
+print(analyzer.get_period_distribution())
 print(analyzer.get_first_bp_distribution())
-print()
 
-# 繪製血壓趨勢圖
+# 顯示血壓趨勢圖
 analyzer.plot_trends()
+
+# 匯出 PDF 報告
+analyzer.generate_pdf_report("bp_report.pdf")
